@@ -55,9 +55,11 @@ public class OrderServiceImpl implements OrderService {
      * @return The Usuario entity.
      */
     private Usuario getCurrentUser() {
+        // Retrieve username from security context
         String username = SecurityContextHolder.getContext()
             .getAuthentication()
             .getName();
+        // Fetch user from repository using username (email)
         return usuarioRepository
             .findByUserInfo_Mail(username)
             .orElseThrow(() ->
@@ -76,9 +78,11 @@ public class OrderServiceImpl implements OrderService {
     @Transactional
     public OrderResponse create(CreateOrderRequest request) {
         Usuario user = getCurrentUser();
+        // Ensure the user account is active before allowing order creation
         if (!user.getActive()) {
             throw new RuntimeException("User is not active.");
         }
+        // Retrieve the user's cart
         Carro cart = carritoRepository
             .findByUser(user)
             .stream()
@@ -89,6 +93,7 @@ public class OrderServiceImpl implements OrderService {
 
         java.util.List<com.uade.back.entity.List> cartItems = cart.getItems();
 
+        // Validate that the cart is not empty
         if (cartItems.isEmpty()) {
             throw new RuntimeException(
                 "Cannot create an order from an empty cart."
@@ -96,9 +101,11 @@ public class OrderServiceImpl implements OrderService {
         }
 
         double subTotal = 0.0;
+        // Iterate through cart items to check stock and calculate subtotal
         for (com.uade.back.entity.List item : cartItems) {
             if (item.getItem() == null) continue;
 
+            // Check if requested quantity exceeds available stock
             if (item.getQuantity() > item.getItem().getQuantity()) {
                 throw new RuntimeException(
                     "Insufficient stock for item: " + item.getItem().getName()
@@ -112,6 +119,7 @@ public class OrderServiceImpl implements OrderService {
         Double discount = 0.0;
         com.uade.back.entity.Cupon cupon = null;
 
+        // Apply coupon if one is associated with the cart
         if (cart.getCupon() != null) {
             cupon = cuponRepository
                 .findById(cart.getCupon().getCuponId())
@@ -119,6 +127,7 @@ public class OrderServiceImpl implements OrderService {
                     new RuntimeException("El cupón no es válido o ha expirado.")
                 );
 
+            // Validate coupon status, expiration date, and usage limits
             if (
                 !cupon.getActivo() ||
                 cupon.getFechaExpiracion().isBefore(Instant.now()) ||
@@ -129,16 +138,20 @@ public class OrderServiceImpl implements OrderService {
                 );
             }
 
+            // Calculate discount and new total
             discount = subTotal * (cupon.getPorcentajeDescuento() / 100);
             total = subTotal - discount;
+            // Increment usage count for the coupon
             cupon.setUsosActuales(cupon.getUsosActuales() + 1);
             cuponRepository.save(cupon);
         }
 
+        // Retrieve delivery address
         Address address = addressRepository
             .findById(request.getAddressId())
             .orElseThrow(() -> new RuntimeException("Address not found."));
 
+        // Verify that the address belongs to the user
         boolean isUserAddress = user
             .getUserInfo()
             .getAddresses()
@@ -149,6 +162,7 @@ public class OrderServiceImpl implements OrderService {
             throw new RuntimeException("Address does not belong to the user.");
         }
 
+        // Get or create delivery entity associated with the address
         Delivery delivery = deliveryRepository
             .findByAddress(address)
             .orElseGet(() ->
@@ -160,6 +174,7 @@ public class OrderServiceImpl implements OrderService {
                 )
             );
 
+        // Build the new order (Pedido)
         Pedido newPedido = Pedido.builder()
             .usuario(user)
             .delivery(delivery)
@@ -169,6 +184,7 @@ public class OrderServiceImpl implements OrderService {
             .montoDescuento(discount)
             .build();
 
+        // Transfer items from cart to order
         List<com.uade.back.entity.List> orderItems = cartItems
             .stream()
             .map(cartItem ->
@@ -180,6 +196,7 @@ public class OrderServiceImpl implements OrderService {
             .collect(Collectors.toList());
         newPedido.setItems(orderItems);
 
+        // Create initial payment record
         Pago newPago = Pago.builder()
             .pedido(newPedido)
             .monto(total.intValue())
@@ -190,8 +207,10 @@ public class OrderServiceImpl implements OrderService {
             .build();
         newPedido.getPagos().add(newPago);
 
+        // Save order and cascade save items/payment
         Pedido savedPedido = pedidoRepository.save(newPedido);
 
+        // Clear the cart after successful order creation
         cart.getItems().clear();
         cart.setCupon(null);
         carritoRepository.save(cart);
@@ -212,6 +231,7 @@ public class OrderServiceImpl implements OrderService {
     private OrderResponse toOrderResponse(Pedido pedido, Pago pago) {
         java.util.List<com.uade.back.entity.List> items = pedido.getItems();
 
+        // Map order items to response items
         java.util.List<OrderResponse.Item> responseItems = items
             .stream()
             .filter(item -> item.getItem() != null)
@@ -251,6 +271,7 @@ public class OrderServiceImpl implements OrderService {
             );
 
         Usuario currentUser = getCurrentUser();
+        // Check if the current user is the owner of the order or an admin
         if (
             !pedido
                 .getUsuario()
@@ -263,6 +284,7 @@ public class OrderServiceImpl implements OrderService {
             );
         }
 
+        // Get the latest payment for the order
         Pago pago = pedido
             .getPagos()
             .stream()
@@ -280,6 +302,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public List<OrderDTO> getMyOrders() {
         Usuario user = getCurrentUser();
+        // Find orders associated with the user
         List<Pedido> pedidos = pedidoRepository.findByUsuario(user);
 
         return pedidos
@@ -295,6 +318,7 @@ public class OrderServiceImpl implements OrderService {
      */
     @Override
     public List<OrderDTO> getAllOrders() {
+        // Find all orders in the system
         List<Pedido> pedidos = pedidoRepository.findAll();
         return pedidos
             .stream()
@@ -309,6 +333,7 @@ public class OrderServiceImpl implements OrderService {
      * @return The OrderDTO.
      */
     private OrderDTO toOrderDTO(Pedido pedido) {
+        // Retrieve the latest payment
         Pago pago = pedido
             .getPagos()
             .stream()
@@ -319,6 +344,7 @@ public class OrderServiceImpl implements OrderService {
                 )
             );
 
+        // Map items to DTOs
         List<OrderItemDTO> itemDTOs = pedido
             .getItems()
             .stream()
@@ -331,6 +357,7 @@ public class OrderServiceImpl implements OrderService {
             )
             .collect(Collectors.toList());
 
+        // Format delivery address
         Address address = pedido.getDelivery().getAddress();
         String fullAddress =
             address.getStreet() +
@@ -380,6 +407,7 @@ public class OrderServiceImpl implements OrderService {
         pago.setStatus(paymentStatus);
 
         Pedido pedido = pago.getPedido();
+        // If payment is successful, update order status and deduct stock
         if (paymentStatus == PaymentStatus.SUCCESS) {
             pedido.setStatus(OrderStatus.START_DELIVERY);
 
@@ -387,7 +415,9 @@ public class OrderServiceImpl implements OrderService {
             for (com.uade.back.entity.List item : items) {
                 if (item.getItem() == null) continue;
                 Inventario inventario = item.getItem();
+                // Calculate new stock quantity
                 int newQuantity = inventario.getQuantity() - item.getQuantity();
+                // Ensure stock does not go negative
                 if (newQuantity < 0) {
                     throw new IllegalStateException(
                         "Stock cannot be negative for item: " +
@@ -398,6 +428,7 @@ public class OrderServiceImpl implements OrderService {
                 inventarioRepository.save(inventario);
             }
         } else if (paymentStatus == PaymentStatus.FAILED) {
+            // Revert order status if payment failed
             pedido.setStatus(OrderStatus.PLACED);
         }
 
@@ -449,6 +480,7 @@ public class OrderServiceImpl implements OrderService {
             );
 
         Usuario currentUser = getCurrentUser();
+        // Ensure user owns the order
         if (
             !pedido.getUsuario().getUser_ID().equals(currentUser.getUser_ID())
         ) {
@@ -457,6 +489,7 @@ public class OrderServiceImpl implements OrderService {
             );
         }
 
+        // Find the most recent payment attempt
         Pago latestPago = pedido
             .getPagos()
             .stream()
@@ -467,12 +500,14 @@ public class OrderServiceImpl implements OrderService {
                 )
             );
 
+        // Only allow retry if previous payment failed
         if (latestPago.getStatus() != PaymentStatus.FAILED) {
             throw new IllegalStateException(
                 "Payment retry is only allowed for failed payments."
             );
         }
 
+        // Create a new payment attempt
         Pago newPago = Pago.builder()
             .pedido(pedido)
             .monto(latestPago.getMonto())
@@ -505,6 +540,7 @@ public class OrderServiceImpl implements OrderService {
                 new RuntimeException("Order not found with id: " + orderId)
             );
 
+        // Map payments to DTOs
         return pedido
             .getPagos()
             .stream()

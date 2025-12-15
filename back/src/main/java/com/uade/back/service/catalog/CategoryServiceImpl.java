@@ -31,11 +31,12 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public List<CategoryResponse> findAll(CategoryListRequest request) {
         List<Categoria> categorias;
+        // If no parent ID is specified, return root categories
         if (request.parentId() == null) {
             categorias = categoriaRepository.findByParentIsNull();
         } else {
             
-            
+            // If parent ID is specified, ensure it exists and return its children
             Categoria parent = categoriaRepository.findById(request.parentId().intValue())
                     .orElseThrow(() -> new RuntimeException("Parent category not found with id: " + request.parentId()));
             categorias = categoriaRepository.findByParent(parent);
@@ -68,6 +69,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public CategoryResponse create(CategoryRequest request) {
         Categoria parent = null;
+        // Check if a parent category ID is provided and valid (0 means no parent)
         if (request.getParentId() != 0) {
             parent = categoriaRepository.findById(request.getParentId().intValue())
                     .orElseThrow(() -> new RuntimeException("Parent category not found with id: " + request.getParentId()));
@@ -112,14 +114,18 @@ public class CategoryServiceImpl implements CategoryService {
         Categoria category = categoriaRepository.findById(request.id())
                 .orElseThrow(() -> new RuntimeException("Category not found with id: " + request.id()));
 
+        // Update name if provided
         if (request.name() != null) {
             category.setName(request.name());
         }
 
+        // Update parent if provided
         if (request.parentId() != null) {
             if (request.parentId() == 0) {
+                // Remove parent
                 category.setParent(null);
             } else {
+                // Set new parent, ensuring it exists
                 Categoria parent = categoriaRepository.findById(request.parentId())
                         .orElseThrow(() -> new RuntimeException("Parent category not found with id: " + request.parentId()));
                 category.setParent(parent);
@@ -138,6 +144,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     @Transactional
     public void delete(Integer id) {
+        // Ensure category exists before attempting delete
         if (!categoriaRepository.existsById(id)) {
             throw new RuntimeException("Category not found with id: " + id);
         }
@@ -151,7 +158,9 @@ public class CategoryServiceImpl implements CategoryService {
      */
     @Override
     public List<CategoryTreeDTO> getCategoryTree() {
+        // Fetch all categories
         List<Categoria> allCategories = categoriaRepository.findAll();
+        // Convert all categories to DTOs and map them by ID
         Map<Integer, CategoryTreeDTO> categoryMap = allCategories.stream()
                 .map(cat -> CategoryTreeDTO.builder()
                         .id(cat.getCatId())
@@ -162,11 +171,14 @@ public class CategoryServiceImpl implements CategoryService {
 
         List<CategoryTreeDTO> rootCategories = new ArrayList<>();
 
+        // Reconstruct the tree structure
         allCategories.forEach(cat -> {
             CategoryTreeDTO node = categoryMap.get(cat.getCatId());
             if (cat.getParent() == null) {
+                // Add to root list if no parent
                 rootCategories.add(node);
             } else {
+                // Add to parent's children list
                 CategoryTreeDTO parentNode = categoryMap.get(cat.getParent().getCatId());
                 if (parentNode != null) {
                     parentNode.getChildren().add(node);

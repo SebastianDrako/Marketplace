@@ -44,14 +44,17 @@ public class ImageServiceImpl implements ImageService {
     @Transactional
     public ImageResponse upload(MultipartFile file, ImageUploadRequest meta) {
         try {
+            // Retrieve the associated product (Inventario)
             Inventario inventario = inventarioRepository.findById(meta.productId())
                     .orElseThrow(() -> new RuntimeException("Product not found with id: " + meta.productId()));
 
+            // Convert MultipartFile to SQL Blob
             Blob blob = new SerialBlob(file.getBytes());
             Image image = Image.builder()
                     .image(blob)
                     .build();
             
+            // Link image to product and save
             image.setInventario(inventario);
             inventario.getImages().add(image); // Keep both sides of the relationship in sync
             Image savedImage = imageRepository.save(image);
@@ -74,6 +77,7 @@ public class ImageServiceImpl implements ImageService {
         Image image = imageRepository.findById(request.id().intValue())
                 .orElseThrow(() -> new RuntimeException("Image not found with id: " + request.id()));
         try {
+            // Convert SQL Blob to byte array and then to Resource
             byte[] bytes = image.getImage().getBytes(1, (int) image.getImage().length());
             
             return new ByteArrayResource(bytes);
@@ -91,6 +95,7 @@ public class ImageServiceImpl implements ImageService {
     @Override
     @Transactional
     public void delete(ImageIdRequest request) {
+        // Verify existence before deletion
         if (!imageRepository.existsById(request.id().intValue())) {
             throw new RuntimeException("Image not found with id: " + request.id());
         }

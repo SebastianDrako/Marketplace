@@ -54,6 +54,7 @@ public class AddressServiceImpl implements AddressService {
         address.setPostalCode(addressRequest.getPostalCode());
         address.setOthers(addressRequest.getOthers());
         address.setName(addressRequest.getName());
+        // Link the address to the current user
         address.getUsersInfo().add(userInfo);
         
         Address savedAddress = addressRepository.save(address);
@@ -69,6 +70,7 @@ public class AddressServiceImpl implements AddressService {
     public List<AddressDto> getAddresses() {
         UserInfo userInfo = getCurrentUserInfo();
         
+        // Convert user's addresses to DTOs
         return userInfo.getAddresses().stream()
                 .map(AddressDto::fromEntity)
                 .collect(Collectors.toList());
@@ -86,6 +88,7 @@ public class AddressServiceImpl implements AddressService {
         Address address = addressRepository.findById(addressId)
                 .orElseThrow(() -> new RuntimeException("Address not found"));
 
+        // Verify that the address belongs to the authenticated user
         boolean isUserAddress = address.getUsersInfo().stream()
                 .anyMatch(ui -> ui.getUserInfoId().equals(userInfo.getUserInfoId()));
 
@@ -109,6 +112,7 @@ public class AddressServiceImpl implements AddressService {
         Address address = addressRepository.findById(addressId)
                 .orElseThrow(() -> new RuntimeException("Address not found"));
         
+        // Verify ownership before updating
         boolean isUserAddress = address.getUsersInfo().stream()
                 .anyMatch(ui -> ui.getUserInfoId().equals(userInfo.getUserInfoId()));
 
@@ -137,6 +141,7 @@ public class AddressServiceImpl implements AddressService {
         Address address = addressRepository.findById(addressId)
                 .orElseThrow(() -> new RuntimeException("Address not found"));
 
+        // Verify ownership before deleting
         boolean isUserAddress = address.getUsersInfo().stream()
                 .anyMatch(ui -> ui.getUserInfoId().equals(userInfo.getUserInfoId()));
 

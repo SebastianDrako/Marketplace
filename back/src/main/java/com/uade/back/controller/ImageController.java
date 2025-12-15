@@ -41,6 +41,7 @@ public class ImageController {
         
     ImageUploadRequest meta;
     try {
+      // Manually parse JSON string to DTO because RequestPart with file upload can be tricky
       meta = objectMapper.readValue(metaJson, ImageUploadRequest.class);
     } catch (JsonProcessingException e) {
       return ResponseEntity.badRequest().body("Invalid JSON format for 'meta' part.");

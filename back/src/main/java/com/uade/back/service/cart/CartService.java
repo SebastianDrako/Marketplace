@@ -38,9 +38,11 @@ public class CartService {
      * @return The Usuario entity.
      */
     private Usuario getCurrentUser() {
+        // Accessing the security context to get the current user's email
         String username = SecurityContextHolder.getContext()
             .getAuthentication()
             .getName();
+        // Fetching the user from the repository using the email
         return usuarioRepository
             .findByUserInfo_Mail(username)
             .orElseThrow(() ->
@@ -56,6 +58,7 @@ public class CartService {
     @Transactional
     public CartResponse getCurrentCart() {
         Usuario user = getCurrentUser();
+        // Checking if a cart exists for the user, if not creating one
         Carro cart = getOrCreateCart(user);
         return createCartResponse(cart);
     }
@@ -71,6 +74,7 @@ public class CartService {
         Usuario user = getCurrentUser();
         Carro cart = getOrCreateCart(user);
 
+        // Fetching the product to ensure it exists
         Inventario productInventory = inventarioRepository
             .findById(request.getProductId())
             .orElseThrow(() ->
@@ -79,12 +83,14 @@ public class CartService {
                 )
             );
 
+        // Checking if there is enough stock for the requested quantity
         if (productInventory.getQuantity() < request.getQuantity()) {
             throw new RuntimeException(
                 "Insufficient stock for product: " + productInventory.getName()
             );
         }
 
+        // Searching for the product in the current cart items to see if it was already added
         com.uade.back.entity.List existingItem = cart
             .getItems()
             .stream()
@@ -92,6 +98,7 @@ public class CartService {
             .findFirst()
             .orElse(null);
 
+        // If the item exists, increase the quantity; otherwise, create a new entry in the cart
         if (existingItem != null) {
             existingItem.setQuantity(
                 existingItem.getQuantity() + request.getQuantity()
@@ -119,6 +126,7 @@ public class CartService {
      */
     @Transactional
     public CartResponse updateItem(Integer itemId, UpdateItemRequest request) {
+        // If the quantity is set to 0, remove the item instead
         if (request.getQuantity() != null && request.getQuantity() == 0) {
             return removeItem(itemId);
         }
@@ -126,6 +134,7 @@ public class CartService {
         Usuario user = getCurrentUser();
         Carro cart = getOrCreateCart(user);
 
+        // Finding the specific item in the cart
         com.uade.back.entity.List itemToUpdate = cart
             .getItems()
             .stream()
@@ -133,6 +142,7 @@ public class CartService {
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Item not found in cart"));
 
+        // Checking if the new quantity is available in stock
         if (itemToUpdate.getItem().getQuantity() < request.getQuantity()) {
             throw new RuntimeException("Insufficient stock");
         }
@@ -154,6 +164,7 @@ public class CartService {
         Usuario user = getCurrentUser();
         Carro cart = getOrCreateCart(user);
 
+        // Removing the item from the list based on its ID
         cart.getItems().removeIf(item -> item.getTlistId().equals(itemId));
         carritoRepository.save(cart);
 
@@ -187,12 +198,14 @@ public class CartService {
         Usuario user = getCurrentUser();
         Carro cart = getOrCreateCart(user);
 
+        // If the coupon code is empty, remove any existing coupon
         if (request.getCodigo() == null || request.getCodigo().isEmpty()) {
             cart.setCupon(null);
             carritoRepository.save(cart);
             return createCartResponse(cart);
         }
 
+        // Validating the coupon code using CuponService
         com.uade.back.entity.Cupon cupon = cuponService
             .validarCupon(request.getCodigo())
             .orElseThrow(() ->
@@ -243,6 +256,7 @@ public class CartService {
      * @return The CartResponse.
      */
     private CartResponse createCartResponse(Carro cart) {
+        // If the cart is empty or null, return an empty response
         if (cart.getItems() == null || cart.getItems().isEmpty()) {
             return CartResponse.builder()
                 .id(cart.getCarro_ID())
@@ -251,12 +265,14 @@ public class CartService {
                 .build();
         }
 
+        // Transforming cart items into DTOs
         java.util.List<CartItem> cartItems = cart
             .getItems()
             .stream()
             .filter(item -> item.getItem() != null)
             .map(item -> {
                 Integer imageId = null;
+                // Selecting the first image if available
                 if (
                     item.getItem().getImages() != null &&
                     !item.getItem().getImages().isEmpty()
@@ -275,6 +291,7 @@ public class CartService {
             })
             .collect(Collectors.toList());
 
+        // Calculating subtotal
         Double subTotal = cartItems
             .stream()
             .mapToDouble(CartItem::getLineTotal)
@@ -284,6 +301,7 @@ public class CartService {
         Double discount = 0.0;
         String couponCode = null;
 
+        // Applying coupon discount if present
         if (cart.getCupon() != null) {
             com.uade.back.entity.Cupon cupon = cart.getCupon();
             discount = subTotal * (cupon.getPorcentajeDescuento() / 100);

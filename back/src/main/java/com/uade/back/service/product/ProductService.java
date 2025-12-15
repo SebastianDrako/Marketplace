@@ -39,6 +39,7 @@ public class ProductService {
     @Transactional(readOnly = true)
     public ProductPageResponse search(Integer categoryId, String q, int page, int size) {
         List<Integer> categoryIds = null;
+        // If a category is specified, fetch all its subcategories to filter recursively
         if (categoryId != null) {
             categoryIds = getAllCategoryIds(categoryId);
         }
@@ -62,6 +63,7 @@ public class ProductService {
         List<Integer> categoryIds = new java.util.ArrayList<>();
         categoryIds.add(categoryId);
 
+        // Recursively find children categories
         List<Categoria> children = categoriaRepository.findByParent(categoriaRepository.findById(categoryId).orElse(null));
         for (Categoria child : children) {
             categoryIds.addAll(getAllCategoryIds(child.getCatId()));
@@ -112,6 +114,7 @@ public class ProductService {
      */
     @Transactional
     public ProductResponse create(ProductRequest request) {
+        // Validate price logic
         if (request.getPrice() < 0) {
             throw new IllegalArgumentException("El precio no puede ser negativo.");
         }
@@ -143,6 +146,7 @@ public class ProductService {
      */
     @Transactional
     public ProductResponse update(Integer id, ProductRequest request){
+        // Validate price logic
         if (request.getPrice() < 0) {
             throw new IllegalArgumentException("El precio no puede ser negativo.");
         }

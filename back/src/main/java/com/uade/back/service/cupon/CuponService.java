@@ -33,6 +33,7 @@ public class CuponService {
      */
     @Transactional
     public Cupon crearCupon(CrearCuponRequest request) {
+        // Validate uniqueness of coupon code
         if (cuponRepository.findByCodigo(request.getCodigo()).isPresent()) {
             throw new IllegalArgumentException("El código de cupón ya existe.");
         }
@@ -63,6 +64,7 @@ public class CuponService {
 
         Cupon cupon = cuponOpt.get();
 
+        // Check if coupon is active, not expired, and usage limit not reached
         if (
             !cupon.getActivo() ||
             cupon.getFechaExpiracion().isBefore(Instant.now()) ||
@@ -140,6 +142,7 @@ public class CuponService {
             .findById(id)
             .orElseThrow(() -> new RuntimeException("Cupón no encontrado."));
 
+        // Update code if provided, ensuring uniqueness
         if (request.getCodigo() != null) {
             cuponRepository
                 .findByCodigo(request.getCodigo())
@@ -152,6 +155,7 @@ public class CuponService {
                 });
             cupon.setCodigo(request.getCodigo());
         }
+        // Update other fields if provided
         if (request.getPorcentajeDescuento() != null) {
             cupon.setPorcentajeDescuento(request.getPorcentajeDescuento());
         }

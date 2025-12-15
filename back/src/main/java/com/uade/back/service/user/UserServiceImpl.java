@@ -35,6 +35,7 @@ public class UserServiceImpl implements UserService {
     public void upgradeToAdmin(Integer userId) {
         Usuario user = usuarioRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+        // Update user role to ADMIN
         user.setAuthLevel(Role.ADMIN);
         usuarioRepository.save(user);
     }
@@ -49,6 +50,7 @@ public class UserServiceImpl implements UserService {
     public void downgradeToUser(Integer userId) {
         Usuario user = usuarioRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+        // Update user role to USER
         user.setAuthLevel(Role.USER);
         usuarioRepository.save(user);
     }
@@ -60,9 +62,11 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public void updateUser(UserUpdateDTO userUpdateDTO) {
+        // Retrieve current authenticated user
         Usuario user = (Usuario) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         UserInfo userInfo = user.getUserInfo();
 
+        // Update fields if they are provided
         if (userUpdateDTO.getFirstName() != null) {
             userInfo.setFirstName(userUpdateDTO.getFirstName());
         }
@@ -89,6 +93,7 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
         UserInfo userInfo = user.getUserInfo();
 
+        // Update UserInfo fields if provided
         if (adminUserUpdateDTO.getFirstName() != null) {
             userInfo.setFirstName(adminUserUpdateDTO.getFirstName());
         }
@@ -98,6 +103,8 @@ public class UserServiceImpl implements UserService {
         if (adminUserUpdateDTO.getMail() != null) {
             userInfo.setMail(adminUserUpdateDTO.getMail());
         }
+
+        // Update User fields if provided
         if (adminUserUpdateDTO.getPassword() != null) {
             user.setPasskey(passwordEncoder.encode(adminUserUpdateDTO.getPassword()));
         }
