@@ -30,6 +30,9 @@ import com.uade.back.repository.UsuarioRepository;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Service for handling user authentication, registration, and account management.
+ */
 @Service
 @RequiredArgsConstructor
 public class AuthenticationService {
@@ -42,6 +45,12 @@ public class AuthenticationService {
         private final AuthenticationManager authenticationManager;
 
 
+        /**
+         * Generates a random OTP string.
+         *
+         * @param n The length of the OTP.
+         * @return The generated OTP string.
+         */
         private String otpGen(int n) {
 
         String caracteres = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -55,6 +64,13 @@ public class AuthenticationService {
         return otp.toString();
         }
 
+        /**
+         * Registers a new user.
+         *
+         * @param info The new user information.
+         * @return The authentication response containing the access token.
+         * @throws RuntimeException if the email is already registered.
+         */
         @Transactional
         public AuthenticationResponse register(NewUserDTO info) {
 
@@ -95,6 +111,13 @@ public class AuthenticationService {
                                 .build();
                 }
 
+        /**
+         * Activates a user account using an OTP.
+         *
+         * @param userId       The ID of the user.
+         * @param otpIngresado The OTP provided by the user.
+         * @throws RuntimeException if the user is not found, email is already confirmed, or OTP is invalid/expired.
+         */
         @Transactional
         public void activateAccount(Integer userId, String otpIngresado) {
             Usuario user = usuarioRepository.findById(userId)
@@ -124,6 +147,13 @@ public class AuthenticationService {
             otpRepository.delete(otp);
         }
 
+        /**
+         * Updates user information.
+         *
+         * @param userId  The ID of the user.
+         * @param request The update details.
+         * @throws RuntimeException if the user is not found or the new email is already in use.
+         */
         @Transactional
         public void updateUser(Integer userId, UpdateUserDTO request) {
             Usuario user = usuarioRepository.findById(userId)
@@ -162,6 +192,12 @@ public class AuthenticationService {
             userInfoRepository.save(userInfo);
         }
 
+        /**
+         * Deactivates a user (soft delete).
+         *
+         * @param userId The ID of the user.
+         * @throws RuntimeException if the user is not found.
+         */
         @Transactional
         public void deleteUser(Integer userId) {
             Usuario user = usuarioRepository.findById(userId)
@@ -171,6 +207,12 @@ public class AuthenticationService {
             usuarioRepository.save(user);
         }
 
+        /**
+         * Authenticates a user.
+         *
+         * @param request The authentication credentials.
+         * @return The authentication response containing the access token.
+         */
         public AuthenticationResponse authenticate(AuthenticationRequest request) {
                 authenticationManager.authenticate(
                                 new UsernamePasswordAuthenticationToken(
@@ -189,6 +231,11 @@ public class AuthenticationService {
                                 .build();
         }
 
+        /**
+         * Retrieves the current authenticated user's details.
+         *
+         * @return The UserDTO.
+         */
         public UserDTO getMe() {
                 var userContext = (Usuario) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
                 var user = usuarioRepository.findById(userContext.getUser_ID()).orElseThrow();
@@ -202,6 +249,12 @@ public class AuthenticationService {
                         .build();
         }
 
+    /**
+     * Changes the current user's password.
+     *
+     * @param passwordChangeDTO The password change details.
+     * @throws RuntimeException if the old password is invalid.
+     */
     public void changePassword(PasswordChangeDTO passwordChangeDTO) {
         Usuario user = (Usuario) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
@@ -213,6 +266,13 @@ public class AuthenticationService {
         usuarioRepository.save(user);
     }
 
+    /**
+     * Retrieves the OTP for a user (admin).
+     *
+     * @param userId The ID of the user.
+     * @return The OtpDTO containing the OTP.
+     * @throws RuntimeException if the user is not found.
+     */
     public OtpDTO adminCheckOtp(Integer userId) {
         Usuario user = usuarioRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -222,6 +282,13 @@ public class AuthenticationService {
         return new OtpDTO(user.getOtp().getOtp());
     }
 
+    /**
+     * Regenerates the OTP for a user (admin).
+     *
+     * @param userId The ID of the user.
+     * @return The OtpDTO containing the new OTP.
+     * @throws RuntimeException if the user is not found.
+     */
     @Transactional
     public OtpDTO adminRegenerateOtp(Integer userId) {
         Usuario user = usuarioRepository.findById(userId)
@@ -239,6 +306,12 @@ public class AuthenticationService {
         return new OtpDTO(savedOtp.getOtp());
     }
 
+    /**
+     * Activates an account by email and OTP.
+     *
+     * @param accountActivationDTO The activation details.
+     * @throws RuntimeException if the user is not found.
+     */
     @Transactional
     public void activateAccountByEmail(AccountActivationDTO accountActivationDTO) {
         UserInfo userInfo = userInfoRepository.findByMail(accountActivationDTO.getEmail())

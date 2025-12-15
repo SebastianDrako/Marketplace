@@ -33,6 +33,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Implementation of the OrderService.
+ */
 @Service
 @RequiredArgsConstructor
 public class OrderServiceImpl implements OrderService {
@@ -46,6 +49,11 @@ public class OrderServiceImpl implements OrderService {
     private final PagoRepository pagoRepository;
     private final CuponRepository cuponRepository;
 
+    /**
+     * Helper method to get the current authenticated user.
+     *
+     * @return The Usuario entity.
+     */
     private Usuario getCurrentUser() {
         String username = SecurityContextHolder.getContext()
             .getAuthentication()
@@ -57,6 +65,13 @@ public class OrderServiceImpl implements OrderService {
             );
     }
 
+    /**
+     * Creates a new order from the user's cart.
+     *
+     * @param request The order creation details.
+     * @return The created order response.
+     * @throws RuntimeException if the user is inactive, cart is empty, stock is insufficient, or address is invalid.
+     */
     @Override
     @Transactional
     public OrderResponse create(CreateOrderRequest request) {
@@ -187,6 +202,13 @@ public class OrderServiceImpl implements OrderService {
         );
     }
 
+    /**
+     * Converts a Pedido and Pago to an OrderResponse DTO.
+     *
+     * @param pedido The order entity.
+     * @param pago   The payment entity.
+     * @return The OrderResponse DTO.
+     */
     private OrderResponse toOrderResponse(Pedido pedido, Pago pago) {
         java.util.List<com.uade.back.entity.List> items = pedido.getItems();
 
@@ -212,6 +234,14 @@ public class OrderServiceImpl implements OrderService {
             .build();
     }
 
+    /**
+     * Retrieves an order by its ID.
+     *
+     * @param request The order ID request.
+     * @return The order response.
+     * @throws RuntimeException if order is not found.
+     * @throws AccessDeniedException if the user is not authorized to view the order.
+     */
     @Override
     public OrderResponse getById(OrderIdRequest request) {
         Pedido pedido = pedidoRepository
@@ -242,6 +272,11 @@ public class OrderServiceImpl implements OrderService {
         return toOrderResponse(pedido, pago);
     }
 
+    /**
+     * Retrieves all orders for the current user.
+     *
+     * @return A list of order DTOs.
+     */
     @Override
     public List<OrderDTO> getMyOrders() {
         Usuario user = getCurrentUser();
@@ -253,6 +288,11 @@ public class OrderServiceImpl implements OrderService {
             .collect(Collectors.toList());
     }
 
+    /**
+     * Retrieves all orders (admin).
+     *
+     * @return A list of all order DTOs.
+     */
     @Override
     public List<OrderDTO> getAllOrders() {
         List<Pedido> pedidos = pedidoRepository.findAll();
@@ -262,6 +302,12 @@ public class OrderServiceImpl implements OrderService {
             .collect(Collectors.toList());
     }
 
+    /**
+     * Converts a Pedido entity to an OrderDTO.
+     *
+     * @param pedido The order entity.
+     * @return The OrderDTO.
+     */
     private OrderDTO toOrderDTO(Pedido pedido) {
         Pago pago = pedido
             .getPagos()
@@ -311,6 +357,14 @@ public class OrderServiceImpl implements OrderService {
             .build();
     }
 
+    /**
+     * Updates the payment status of an order.
+     *
+     * @param pagoId   The ID of the payment.
+     * @param newStatus The new payment status.
+     * @throws RuntimeException if payment is not found.
+     * @throws IllegalStateException if stock becomes negative upon success.
+     */
     @Override
     @Transactional
     public void updatePaymentStatus(Integer pagoId, String newStatus) {
@@ -351,6 +405,13 @@ public class OrderServiceImpl implements OrderService {
         pedidoRepository.save(pedido);
     }
 
+    /**
+     * Updates the delivery status of an order.
+     *
+     * @param orderId   The ID of the order.
+     * @param newStatus The new delivery status.
+     * @throws RuntimeException if order is not found.
+     */
     @Override
     @Transactional
     public void updateDeliveryStatus(Integer orderId, String newStatus) {
@@ -365,6 +426,16 @@ public class OrderServiceImpl implements OrderService {
         pedidoRepository.save(pedido);
     }
 
+    /**
+     * Retries payment for a specific order.
+     *
+     * @param orderId The ID of the order.
+     * @param request The retry payment request details.
+     * @return The updated order response.
+     * @throws RuntimeException if order or payment is not found.
+     * @throws AccessDeniedException if the user is not authorized.
+     * @throws IllegalStateException if payment retry is not allowed.
+     */
     @Override
     @Transactional
     public OrderResponse retryPayment(
@@ -417,6 +488,13 @@ public class OrderServiceImpl implements OrderService {
         return toOrderResponse(savedPedido, newPago);
     }
 
+    /**
+     * Retrieves all payments associated with an order.
+     *
+     * @param orderId The ID of the order.
+     * @return A list of payment DTOs.
+     * @throws RuntimeException if the order is not found.
+     */
     @Override
     public List<com.uade.back.dto.order.PaymentDTO> getOrderPayments(
         Integer orderId
@@ -434,6 +512,12 @@ public class OrderServiceImpl implements OrderService {
             .collect(Collectors.toList());
     }
 
+    /**
+     * Converts a Pago entity to a PaymentDTO.
+     *
+     * @param pago The payment entity.
+     * @return The PaymentDTO.
+     */
     private com.uade.back.dto.order.PaymentDTO toPaymentDTO(Pago pago) {
         return com.uade.back.dto.order.PaymentDTO.builder()
             .paymentId(pago.getPagoId())

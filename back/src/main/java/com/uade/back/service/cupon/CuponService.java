@@ -15,12 +15,22 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Service for managing coupons.
+ */
 @Service
 @RequiredArgsConstructor
 public class CuponService {
 
     private final CuponRepository cuponRepository;
 
+    /**
+     * Creates a new coupon.
+     *
+     * @param request The coupon creation request.
+     * @return The created coupon entity.
+     * @throws IllegalArgumentException if the coupon code already exists.
+     */
     @Transactional
     public Cupon crearCupon(CrearCuponRequest request) {
         if (cuponRepository.findByCodigo(request.getCodigo()).isPresent()) {
@@ -37,6 +47,12 @@ public class CuponService {
         return cuponRepository.save(cupon);
     }
 
+    /**
+     * Validates a coupon by its code.
+     *
+     * @param codigo The coupon code.
+     * @return An Optional containing the coupon if valid, or empty otherwise.
+     */
     @Transactional(readOnly = true)
     public Optional<Cupon> validarCupon(String codigo) {
         Optional<Cupon> cuponOpt = cuponRepository.findByCodigo(codigo);
@@ -58,6 +74,15 @@ public class CuponService {
         return cuponOpt;
     }
 
+    /**
+     * Retrieves coupons with filtering and pagination.
+     *
+     * @param codigo Optional code to search for.
+     * @param activo Optional status to filter by.
+     * @param page   Page number.
+     * @param size   Page size.
+     * @return A response containing a list of coupons and total pages.
+     */
     @Transactional(readOnly = true)
     public CuponPageResponse getAllCupones(
         String codigo,
@@ -79,6 +104,12 @@ public class CuponService {
         return new CuponPageResponse(cupones, results.getTotalPages());
     }
 
+    /**
+     * Converts a Cupon entity to a CuponResponse DTO.
+     *
+     * @param cupon The coupon entity.
+     * @return The coupon response DTO.
+     */
     private CuponResponse toCuponResponse(Cupon cupon) {
         return CuponResponse.builder()
             .id(cupon.getCuponId())
@@ -91,6 +122,15 @@ public class CuponService {
             .build();
     }
 
+    /**
+     * Updates an existing coupon.
+     *
+     * @param id      The ID of the coupon to update.
+     * @param request The coupon update request.
+     * @return The updated coupon response.
+     * @throws RuntimeException if the coupon is not found.
+     * @throws IllegalArgumentException if the new code already exists for another coupon.
+     */
     @Transactional
     public CuponResponse updateCupon(
         Integer id,

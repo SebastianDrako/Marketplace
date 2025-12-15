@@ -16,6 +16,9 @@ import com.uade.back.repository.UsuarioRepository;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Implementation of the AddressService.
+ */
 @Service
 @RequiredArgsConstructor
 public class AddressServiceImpl implements AddressService {
@@ -23,6 +26,11 @@ public class AddressServiceImpl implements AddressService {
     private final AddressRepository addressRepository;
     private final UsuarioRepository usuarioRepository;
 
+    /**
+     * Helper method to get the current authenticated user's information.
+     *
+     * @return The UserInfo entity.
+     */
     private UserInfo getCurrentUserInfo() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         Usuario usuario = usuarioRepository.findByUserInfo_Mail(username)
@@ -30,6 +38,12 @@ public class AddressServiceImpl implements AddressService {
         return usuario.getUserInfo();
     }
 
+    /**
+     * Creates a new address for the current user.
+     *
+     * @param addressRequest The address creation details.
+     * @return The created address DTO.
+     */
     @Override
     public AddressDto createAddress(CreateAddressRequest addressRequest) {
         UserInfo userInfo = getCurrentUserInfo();
@@ -46,6 +60,11 @@ public class AddressServiceImpl implements AddressService {
         return AddressDto.fromEntity(savedAddress);
     }
 
+    /**
+     * Retrieves all addresses associated with the current user.
+     *
+     * @return A list of address DTOs.
+     */
     @Override
     public List<AddressDto> getAddresses() {
         UserInfo userInfo = getCurrentUserInfo();
@@ -55,6 +74,12 @@ public class AddressServiceImpl implements AddressService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Retrieves a specific address by its ID.
+     *
+     * @param addressId The ID of the address.
+     * @return The address DTO.
+     */
     @Override
     public AddressDto getAddressById(Integer addressId) {
         UserInfo userInfo = getCurrentUserInfo();
@@ -71,6 +96,13 @@ public class AddressServiceImpl implements AddressService {
         return AddressDto.fromEntity(address);
     }
 
+    /**
+     * Updates an existing address.
+     *
+     * @param addressId      The ID of the address to update.
+     * @param addressRequest The address update details.
+     * @return The updated address DTO.
+     */
     @Override
     public AddressDto updateAddress(Integer addressId, CreateAddressRequest addressRequest) {
         UserInfo userInfo = getCurrentUserInfo();
@@ -94,6 +126,11 @@ public class AddressServiceImpl implements AddressService {
         return AddressDto.fromEntity(updatedAddress);
     }
 
+    /**
+     * Deletes an address by its ID.
+     *
+     * @param addressId The ID of the address to delete.
+     */
     @Override
     public void deleteAddress(Integer addressId) {
         UserInfo userInfo = getCurrentUserInfo();

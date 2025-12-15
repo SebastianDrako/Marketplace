@@ -5,6 +5,9 @@ import org.springframework.stereotype.Repository;
 
 import com.uade.back.entity.Config;
 
+/**
+ * Repository for accessing Configuration data.
+ */
 @Repository
 public interface ConfigRepository extends JpaRepository<Config, String> {
 }

@@ -18,12 +18,24 @@ import com.uade.back.repository.InventarioRepository;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Service for managing products (Inventario).
+ */
 @Service
 @RequiredArgsConstructor
 public class ProductService {
     private final InventarioRepository inventarioRepository;
     private final CategoriaRepository categoriaRepository;
 
+    /**
+     * Searches for products based on category and query string.
+     *
+     * @param categoryId Optional category ID.
+     * @param q          Optional query string.
+     * @param page       Page number.
+     * @param size       Page size.
+     * @return A paginated response of products.
+     */
     @Transactional(readOnly = true)
     public ProductPageResponse search(Integer categoryId, String q, int page, int size) {
         List<Integer> categoryIds = null;
@@ -40,6 +52,12 @@ public class ProductService {
         return new ProductPageResponse(products, results.getTotalPages());
     }
 
+    /**
+     * Helper method to get all category IDs including subcategories.
+     *
+     * @param categoryId The root category ID.
+     * @return A list of all category IDs in the subtree.
+     */
     private List<Integer> getAllCategoryIds(Integer categoryId) {
         List<Integer> categoryIds = new java.util.ArrayList<>();
         categoryIds.add(categoryId);
@@ -51,6 +69,12 @@ public class ProductService {
         return categoryIds;
     }
 
+    /**
+     * Converts an Inventario entity to a ProductResponse DTO.
+     *
+     * @param inventario The product entity.
+     * @return The product response DTO.
+     */
     private ProductResponse toProductResponse(Inventario inventario) {
         return ProductResponse.builder()
                 .id(inventario.getItemId())
@@ -64,6 +88,13 @@ public class ProductService {
                 .build();
     }
 
+    /**
+     * Retrieves a product by its ID.
+     *
+     * @param id The ID of the product.
+     * @return The product response DTO.
+     * @throws RuntimeException if the product is not found.
+     */
     @Transactional(readOnly = true)
     public ProductResponse getById(Integer id) {
         Inventario inventario = inventarioRepository.findById(id)
@@ -71,6 +102,14 @@ public class ProductService {
         return toProductResponse(inventario);
     }
 
+    /**
+     * Creates a new product.
+     *
+     * @param request The product creation details.
+     * @return The created product response.
+     * @throws IllegalArgumentException if the price is negative.
+     * @throws RuntimeException if the category is not found.
+     */
     @Transactional
     public ProductResponse create(ProductRequest request) {
         if (request.getPrice() < 0) {
@@ -93,6 +132,15 @@ public class ProductService {
         return toProductResponse(saved);
     }
 
+    /**
+     * Updates an existing product.
+     *
+     * @param id      The ID of the product to update.
+     * @param request The product update details.
+     * @return The updated product response.
+     * @throws IllegalArgumentException if the price is negative.
+     * @throws RuntimeException if the product or category is not found.
+     */
     @Transactional
     public ProductResponse update(Integer id, ProductRequest request){
         if (request.getPrice() < 0) {
@@ -115,6 +163,12 @@ public class ProductService {
         return toProductResponse(actualizado);
     }
 
+    /**
+     * Deletes a product by its ID.
+     *
+     * @param id The ID of the product to delete.
+     * @throws RuntimeException if the product is not found.
+     */
     @Transactional
     public void delete(Integer id){
         Inventario inventario = inventarioRepository.findById(id)
@@ -122,6 +176,16 @@ public class ProductService {
         inventarioRepository.delete(inventario);
     }  
 
+    /**
+     * Searches for products with administrative filters.
+     *
+     * @param categoryId Optional category ID.
+     * @param q          Optional query string.
+     * @param active     Optional active status filter.
+     * @param page       Page number.
+     * @param size       Page size.
+     * @return A paginated response of products.
+     */
     @Transactional(readOnly = true)
     public ProductPageResponse searchAdmin(Integer categoryId, String q, Boolean active, int page, int size) {
         Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);

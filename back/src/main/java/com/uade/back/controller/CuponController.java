@@ -11,6 +11,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * Controller for managing coupons.
+ */
 @RestController
 @RequestMapping("/api/v1/cupones")
 @RequiredArgsConstructor
@@ -18,6 +21,12 @@ public class CuponController {
 
     private final CuponService cuponService;
 
+    /**
+     * Creates a new coupon.
+     *
+     * @param request The coupon creation details.
+     * @return The created coupon.
+     */
     @PostMapping
     public ResponseEntity<Cupon> crearCupon(
         @RequestBody CrearCuponRequest request
@@ -25,6 +34,15 @@ public class CuponController {
         return ResponseEntity.ok(cuponService.crearCupon(request));
     }
 
+    /**
+     * Retrieves all coupons with optional filtering and pagination.
+     *
+     * @param codigo Optional coupon code filter.
+     * @param activo Optional active status filter.
+     * @param page   Page number (default 0).
+     * @param size   Page size (default 20).
+     * @return A paginated response of coupons.
+     */
     @GetMapping
     public ResponseEntity<CuponPageResponse> getAllCupones(
         @RequestParam(required = false) String codigo,
@@ -37,6 +55,13 @@ public class CuponController {
         );
     }
 
+    /**
+     * Updates an existing coupon.
+     *
+     * @param id      The ID of the coupon to update.
+     * @param request The coupon update details.
+     * @return The updated coupon response.
+     */
     @PutMapping("/{id}")
     public ResponseEntity<com.uade.back.dto.cupon.CuponResponse> updateCupon(
         @PathVariable Integer id,
@@ -45,6 +70,12 @@ public class CuponController {
         return ResponseEntity.ok(cuponService.updateCupon(id, request));
     }
 
+    /**
+     * Validates a coupon code.
+     *
+     * @param request The validation request containing the coupon code.
+     * @return The validation response indicating validity and discount percentage.
+     */
     @PostMapping("/validar")
     public ResponseEntity<ValidarCuponResponse> validarCupon(
         @RequestBody ValidarCuponRequest request
