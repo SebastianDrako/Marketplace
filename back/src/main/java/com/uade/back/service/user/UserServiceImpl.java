@@ -14,6 +14,9 @@ import com.uade.back.repository.UsuarioRepository;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Implementation of the UserService.
+ */
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
@@ -22,6 +25,12 @@ public class UserServiceImpl implements UserService {
     private final UserInfoRepository userInfoRepository;
     private final PasswordEncoder passwordEncoder;
 
+    /**
+     * Upgrades a user to admin role.
+     *
+     * @param userId The ID of the user.
+     * @throws RuntimeException if the user is not found.
+     */
     @Override
     public void upgradeToAdmin(Integer userId) {
         Usuario user = usuarioRepository.findById(userId)
@@ -30,6 +39,12 @@ public class UserServiceImpl implements UserService {
         usuarioRepository.save(user);
     }
 
+    /**
+     * Downgrades a user to standard user role.
+     *
+     * @param userId The ID of the user.
+     * @throws RuntimeException if the user is not found.
+     */
     @Override
     public void downgradeToUser(Integer userId) {
         Usuario user = usuarioRepository.findById(userId)
@@ -38,6 +53,11 @@ public class UserServiceImpl implements UserService {
         usuarioRepository.save(user);
     }
 
+    /**
+     * Updates the current user's profile.
+     *
+     * @param userUpdateDTO The update details.
+     */
     @Override
     public void updateUser(UserUpdateDTO userUpdateDTO) {
         Usuario user = (Usuario) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -56,6 +76,13 @@ public class UserServiceImpl implements UserService {
         userInfoRepository.save(userInfo);
     }
 
+    /**
+     * Updates a user's details by an admin.
+     *
+     * @param userId             The ID of the user.
+     * @param adminUserUpdateDTO The admin update details.
+     * @throws RuntimeException if the user is not found.
+     */
     @Override
     public void adminUpdateUser(Integer userId, AdminUserUpdateDTO adminUserUpdateDTO) {
         Usuario user = usuarioRepository.findById(userId)
@@ -85,6 +112,11 @@ public class UserServiceImpl implements UserService {
         usuarioRepository.save(user);
     }
 
+    /**
+     * Retrieves all users.
+     *
+     * @return A list of all users.
+     */
     @Override
     public java.util.List<com.uade.back.entity.Usuario> getAllUsers() {
         return usuarioRepository.findAll();

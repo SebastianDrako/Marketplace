@@ -5,6 +5,9 @@ import org.springframework.stereotype.Repository;
 
 import com.uade.back.entity.Otp;
 
+/**
+ * Repository for accessing OTP data.
+ */
 @Repository
 public interface OTPRepository extends JpaRepository<Otp, Integer> {
 

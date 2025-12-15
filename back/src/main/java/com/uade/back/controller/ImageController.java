@@ -16,6 +16,9 @@ import com.uade.back.service.image.ImageService;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Controller for managing image uploads and downloads.
+ */
 @RestController
 @RequestMapping("/api/v1/images")
 @RequiredArgsConstructor
@@ -24,6 +27,13 @@ public class ImageController {
   private final ImageService service;
   private final ObjectMapper objectMapper;
 
+  /**
+   * Uploads an image.
+   *
+   * @param file     The image file.
+   * @param metaJson The metadata for the image in JSON format.
+   * @return The uploaded image response.
+   */
   @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<?> upload(
       @RequestPart("file") MultipartFile file,
@@ -39,6 +49,12 @@ public class ImageController {
     return ResponseEntity.ok(imageResponse);
   }
 
+  /**
+   * Retrieves an image by its ID.
+   *
+   * @param id The ID of the image.
+   * @return The image resource.
+   */
   @GetMapping("/{id}")
     public ResponseEntity<Resource> getImageById(@PathVariable Integer id) {
         ImageIdRequest request = new ImageIdRequest(id);
@@ -49,6 +65,12 @@ public class ImageController {
                 .body(resource);
     }
 
+  /**
+   * Downloads an image.
+   *
+   * @param request The image ID request.
+   * @return The image resource with attachment disposition.
+   */
   @PostMapping("/download")
   public ResponseEntity<Resource> download(@RequestBody ImageIdRequest request) {
     Resource res = service.download(request);
@@ -58,6 +80,12 @@ public class ImageController {
         .body(res);
   }
 
+  /**
+   * Deletes an image.
+   *
+   * @param request The image ID request.
+   * @return A response entity with no content.
+   */
   @DeleteMapping
   public ResponseEntity<Void> delete(@RequestBody ImageIdRequest request) {
     service.delete(request);

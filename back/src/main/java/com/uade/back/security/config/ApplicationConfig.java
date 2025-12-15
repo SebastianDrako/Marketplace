@@ -16,6 +16,9 @@ import com.uade.back.repository.UsuarioRepository;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Configuration class for application security beans.
+ */
 @Configuration
 @RequiredArgsConstructor
 public class ApplicationConfig {
@@ -23,6 +26,11 @@ public class ApplicationConfig {
     private final UserInfoRepository userInfoRepository;
     private final UsuarioRepository usuarioRepository;
 
+    /**
+     * Creates a UserDetailsService bean.
+     *
+     * @return The UserDetailsService.
+     */
     @Bean
     public UserDetailsService userDetailsService() {
         return username -> {
@@ -34,6 +42,11 @@ public class ApplicationConfig {
         };
     }
 
+    /**
+     * Creates an AuthenticationProvider bean.
+     *
+     * @return The AuthenticationProvider.
+     */
     @Bean
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
@@ -42,11 +55,23 @@ public class ApplicationConfig {
         return authenticationProvider;
     }
 
+    /**
+     * Creates an AuthenticationManager bean.
+     *
+     * @param config The authentication configuration.
+     * @return The AuthenticationManager.
+     * @throws Exception if an error occurs.
+     */
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
 
+    /**
+     * Creates a PasswordEncoder bean.
+     *
+     * @return The PasswordEncoder (BCrypt).
+     */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();

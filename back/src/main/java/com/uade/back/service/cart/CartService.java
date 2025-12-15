@@ -19,6 +19,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Service for managing the shopping cart.
+ */
 @Service
 @RequiredArgsConstructor
 public class CartService {
@@ -29,6 +32,11 @@ public class CartService {
     private final InventarioRepository inventarioRepository;
     private final CuponService cuponService;
 
+    /**
+     * Retrieves the current authenticated user.
+     *
+     * @return The Usuario entity.
+     */
     private Usuario getCurrentUser() {
         String username = SecurityContextHolder.getContext()
             .getAuthentication()
@@ -40,6 +48,11 @@ public class CartService {
             );
     }
 
+    /**
+     * Retrieves the current user's cart.
+     *
+     * @return The CartResponse containing cart details.
+     */
     @Transactional
     public CartResponse getCurrentCart() {
         Usuario user = getCurrentUser();
@@ -47,6 +60,12 @@ public class CartService {
         return createCartResponse(cart);
     }
 
+    /**
+     * Adds an item to the current user's cart.
+     *
+     * @param request The item details to add.
+     * @return The updated CartResponse.
+     */
     @Transactional
     public CartResponse addItem(AddItemRequest request) {
         Usuario user = getCurrentUser();
@@ -91,6 +110,13 @@ public class CartService {
         return createCartResponse(cart);
     }
 
+    /**
+     * Updates an existing item in the cart.
+     *
+     * @param itemId  The ID of the item to update.
+     * @param request The update details.
+     * @return The updated CartResponse.
+     */
     @Transactional
     public CartResponse updateItem(Integer itemId, UpdateItemRequest request) {
         if (request.getQuantity() != null && request.getQuantity() == 0) {
@@ -117,6 +143,12 @@ public class CartService {
         return createCartResponse(cart);
     }
 
+    /**
+     * Removes an item from the cart.
+     *
+     * @param itemId The ID of the item to remove.
+     * @return The updated CartResponse.
+     */
     @Transactional
     public CartResponse removeItem(Integer itemId) {
         Usuario user = getCurrentUser();
@@ -128,6 +160,11 @@ public class CartService {
         return createCartResponse(cart);
     }
 
+    /**
+     * Clears all items from the cart.
+     *
+     * @return The empty CartResponse.
+     */
     @Transactional
     public CartResponse clear() {
         Usuario user = getCurrentUser();
@@ -137,6 +174,12 @@ public class CartService {
         return createCartResponse(cart);
     }
 
+    /**
+     * Applies a coupon to the cart.
+     *
+     * @param request The coupon application request.
+     * @return The updated CartResponse with the applied coupon.
+     */
     @Transactional
     public CartResponse aplicarCupon(
         com.uade.back.dto.cart.AplicarCuponRequest request
@@ -162,6 +205,11 @@ public class CartService {
         return createCartResponse(cart);
     }
 
+    /**
+     * Removes the applied coupon from the cart.
+     *
+     * @return The updated CartResponse without the coupon.
+     */
     @Transactional
     public CartResponse removeCoupon() {
         Usuario user = getCurrentUser();
@@ -171,6 +219,12 @@ public class CartService {
         return createCartResponse(cart);
     }
 
+    /**
+     * Helper method to get or create a cart for the user.
+     *
+     * @param user The user entity.
+     * @return The user's cart.
+     */
     private Carro getOrCreateCart(Usuario user) {
         return carritoRepository
             .findByUser(user)
@@ -182,6 +236,12 @@ public class CartService {
             });
     }
 
+    /**
+     * Helper method to create a CartResponse from a Carro entity.
+     *
+     * @param cart The cart entity.
+     * @return The CartResponse.
+     */
     private CartResponse createCartResponse(Carro cart) {
         if (cart.getItems() == null || cart.getItems().isEmpty()) {
             return CartResponse.builder()

@@ -13,12 +13,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Implementation of the CategoryService.
+ */
 @Service
 @RequiredArgsConstructor
 public class CategoryServiceImpl implements CategoryService {
 
     private final CategoriaRepository categoriaRepository;
 
+    /**
+     * Retrieves categories, optionally filtering by parent ID.
+     *
+     * @param request The request containing the parent ID (optional).
+     * @return A list of category responses.
+     */
     @Override
     public List<CategoryResponse> findAll(CategoryListRequest request) {
         List<Categoria> categorias;
@@ -37,6 +46,12 @@ public class CategoryServiceImpl implements CategoryService {
                 .collect(java.util.stream.Collectors.toList());
     }
 
+    /**
+     * Retrieves a category by its ID.
+     *
+     * @param id The ID of the category.
+     * @return The category response.
+     */
     @Override
     public CategoryResponse findById(Integer id) {
         Categoria categoria = categoriaRepository.findById(id)
@@ -44,6 +59,12 @@ public class CategoryServiceImpl implements CategoryService {
         return toCategoryResponse(categoria);
     }
 
+    /**
+     * Creates a new category.
+     *
+     * @param request The category creation details.
+     * @return The created category response.
+     */
     @Override
     public CategoryResponse create(CategoryRequest request) {
         Categoria parent = null;
@@ -62,6 +83,12 @@ public class CategoryServiceImpl implements CategoryService {
         return toCategoryResponse(savedCategoria);
     }
 
+    /**
+     * Helper method to convert a Categoria entity to a CategoryResponse DTO.
+     *
+     * @param categoria The category entity.
+     * @return The CategoryResponse DTO.
+     */
     private CategoryResponse toCategoryResponse(Categoria categoria) {
         if (categoria == null) {
             return null;
@@ -73,6 +100,12 @@ public class CategoryServiceImpl implements CategoryService {
         );
     }
 
+    /**
+     * Updates an existing category.
+     *
+     * @param request The category update details.
+     * @return The updated category response.
+     */
     @Override
     @Transactional
     public CategoryResponse update(CategoryUpdateRequest request) {
@@ -97,6 +130,11 @@ public class CategoryServiceImpl implements CategoryService {
         return toCategoryResponse(savedCategory);
     }
 
+    /**
+     * Deletes a category by its ID.
+     *
+     * @param id The ID of the category to delete.
+     */
     @Override
     @Transactional
     public void delete(Integer id) {
@@ -106,6 +144,11 @@ public class CategoryServiceImpl implements CategoryService {
         categoriaRepository.deleteById(id);
     }
 
+    /**
+     * Retrieves the entire category tree.
+     *
+     * @return A list of root CategoryTreeDTOs, each containing their children.
+     */
     @Override
     public List<CategoryTreeDTO> getCategoryTree() {
         List<Categoria> allCategories = categoriaRepository.findAll();

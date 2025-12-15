@@ -5,6 +5,9 @@ import org.springframework.stereotype.Repository;
 
 import com.uade.back.entity.Image;
 
+/**
+ * Repository for accessing Image data.
+ */
 @Repository
 public interface ImageRepository extends JpaRepository<Image, Integer> {
 }

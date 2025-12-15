@@ -22,6 +22,9 @@ import com.uade.back.repository.InventarioRepository;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Implementation of the ImageService.
+ */
 @Service
 @RequiredArgsConstructor
 public class ImageServiceImpl implements ImageService {
@@ -29,6 +32,14 @@ public class ImageServiceImpl implements ImageService {
     private final ImageRepository imageRepository;
     private final InventarioRepository inventarioRepository;
 
+    /**
+     * Uploads an image associated with a product.
+     *
+     * @param file The image file.
+     * @param meta The metadata including the product ID.
+     * @return The uploaded image response.
+     * @throws RuntimeException if the product is not found or upload fails.
+     */
     @Override
     @Transactional
     public ImageResponse upload(MultipartFile file, ImageUploadRequest meta) {
@@ -50,6 +61,13 @@ public class ImageServiceImpl implements ImageService {
         }
     }
 
+    /**
+     * Downloads an image by its ID.
+     *
+     * @param request The image ID request.
+     * @return The image as a Resource.
+     * @throws RuntimeException if the image is not found or download fails.
+     */
     @Override
     @Transactional(readOnly = true)
     public Resource download(ImageIdRequest request) {
@@ -64,6 +82,12 @@ public class ImageServiceImpl implements ImageService {
         }
     }
 
+    /**
+     * Deletes an image by its ID.
+     *
+     * @param request The image ID request.
+     * @throws RuntimeException if the image is not found.
+     */
     @Override
     @Transactional
     public void delete(ImageIdRequest request) {
